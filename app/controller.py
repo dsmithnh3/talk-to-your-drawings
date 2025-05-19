@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from app.tool_detection import detect_objects, BBoxList
 from app.tool_plot_bbox import plot_bounding_boxes_go
 from PIL import Image
-from typing import  Union
+from typing import  Union, Generator
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -56,7 +56,7 @@ class Response(BaseModel):
 
 
 def llm_response(messages: list[dict]) -> Response:
-    return client.chat.completions.create(
+    return client.chat.completions.create_partial(
         model="o4-mini",
         messages=messages,
         response_model=Response,
@@ -111,18 +111,33 @@ class Controller(vkt.Controller):
 
         messages.extend(params.chat.get_messages())
 
-        response: Response = llm_response(messages)
-        logger.info(f"[LLM REPONSE]:    {response}")
+        partials: Generator[Response, None, None] = llm_response(messages)
 
-    
-        if response.action is not None:
-            vkt.Storage().set(
-                "View",
-                data=vkt.File.from_data(response.action.model_dump_json()),
-                scope="entity",
-            )
+        def text_stream() -> Generator[str, None, None]:
+            prev_text = ""
+            for partial in partials:
+                if partial.response is None:
+                    continue
 
-        return vkt.ChatResult(params.chat, response.response)
+                full_text = partial.response
+                if full_text.startswith(prev_text):
+                    delta = full_text[len(prev_text):]
+                else:
+                    delta = full_text
+
+                prev_text = full_text
+
+                if partial.action is not None:
+                    vkt.Storage().set(
+                        "View",
+                        data=vkt.File.from_data(partial.action.model_dump_json()),
+                        scope="entity",
+                    )
+
+                if delta:
+                    yield delta
+
+        return vkt.ChatResult(params.chat, text_stream())
     
     @vkt.PlotlyView("Drawing Annotations", width=100)
     def plot_view(self, params, **kwargs) -> vkt.PlotlyResult:
@@ -191,5 +206,5 @@ class Controller(vkt.Controller):
         byte_arr = io.BytesIO()
         img.save(byte_arr, format='PNG')
         byte_arr.seek(0)
-        
+
         return base64.b64encode(byte_arr.getvalue()).decode("utf-8")
