@@ -1,0 +1,7 @@
+viktor==14.21.0
+python-dotenv
+google-genai
+instructor[google-genai]
+pillow
+openai
+plotly
