@@ -37,7 +37,7 @@ class Action(BaseModel):
     query: str = Field(
         ...,
         description=dedent(
-            """Query to be send to an object detection tool that highlights multiple or single components from the drawings, ans shows  a bounding box with lables to the user. need to be simple, query should be words like "detect breakers", "detect pumps", "detect busbars", "detect disconnectors" """
+            """Query to be sent to an object detection tool that highlights multiple or single components from the drawings, and shows a bounding box with labels to the user. Needs to be simple, query should be words like "detect breakers", "detect pumps", "detect busbars", "detect disconnectors" """
         ),
     )
 
@@ -46,12 +46,12 @@ class Response(BaseModel):
     response: str = Field(
         ...,
         description=dedent(
-            "Friendly response to the user about the question they asked. Be thorought!"
+            "Friendly response to the user about the question they asked. Be thorough!"
         ),
     )
     action: Union[Action | None] = Field(
         ...,
-        description="Use action to complement your answer you can highlithing the main components of the drawing, that are being reference in the text response, can be None if you want to keep current view or no element needs to be highlighted",
+        description="Use action to complement your answer. You can highlight the main components of the drawing that are being referenced in the text response. Can be None if you want to keep the current view or no element needs to be highlighted.",
     )
 
 
@@ -60,7 +60,7 @@ def llm_response(messages: list[dict]) -> Response:
         model="o4-mini",
         messages=messages,
         response_model=Response,
-        reasoning_effort="low",
+        reasoning_effort="high",
     )
 
 
@@ -91,9 +91,9 @@ class Controller(vkt.Controller):
                 "role": "system",
                 "content": dedent(
                     """\
-                    You are a helpful assistant that helps users to understand enginneering drawings
-                    You run inside a VIKTOR.AI app thas allow you to highlith components of the drawing. Use clear, simple but formal English with correct use of
-                    engenieering terms.
+                    You are a helpful assistant that helps users to understand engineering drawings.
+                    You run inside a VIKTOR.AI app that allows you to highlight components of the drawing. Use clear, simple but formal English with correct use of
+                    engineering terms.
                     """
                 ),
             }]

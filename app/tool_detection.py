@@ -46,8 +46,8 @@ def detect_objects(query: str, image_path: str) -> BBoxList:
             {
                 "role": "system",
                 "content": dedent(
-                    """You are a precise object detection agent who always checks and thinks whether the bounding box of the detected object is correct.
-                    You think step by step, always verifying that the bounding boxes are accurate."""
+                    """You are an object detection agent who always checks and thinks whether the bounding box of the detected object is correct.
+                    You THINK step by step, always verifying that the bounding boxes are accurate."""
                 ),
             },
             {
